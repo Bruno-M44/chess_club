@@ -15,8 +15,13 @@ class Tournament:
             self.number_of_tours = 4
         else:
             self.number_of_tours = dict_init["number_of_tours"]
+        self.tours = dict_init["tours"]
         self.tours = []
+        for tour in dict_init["tours"]:
+            self.tours.append(Tour(tour))
         self.players = []
+        for player in dict_init["players"]:
+            self.players.append(Player(player))
         self.time_control = dict_init["time_control"]
         self.description = dict_init["description"]
 
@@ -45,7 +50,6 @@ class Tournament:
             "description": self.description
         }
         serialized_players = []
-        print(self.players)
         for player in self.players:
             serialized_players.append(player.serialization())
         serialized_tournament["players"] = serialized_players
@@ -92,8 +96,9 @@ class Player:
         self.birthday = dict_init["birthday"]
         self.gender = dict_init["gender"]
         self.ranking = dict_init["ranking"]
-        self.score = 0
-        self.players_met = []
+
+    #        self.score = 0
+    #        self.players_met = []
 
     def serialization(self):
         serialized_player = {
@@ -193,8 +198,7 @@ def main():
 
 
 def view_main_menu():
-    i_correct_input = False
-    while not i_correct_input:
+    while True:
         print("1- Tournois (consultation, modification, création)")
         print("2- Joueurs (consultation, modification, création)")
         print("3- Quitter le programme")
@@ -202,11 +206,9 @@ def view_main_menu():
         try:
             entry = int(input())
             if entry == 1:
-                view_tournament_menu()
-                i_correct_input = True
+                return view_tournament_menu()
             elif entry == 2:
-                view_player_menu()
-                i_correct_input = True
+                return view_player_menu()
             elif entry == 3:
                 return "fin programme"
             else:
@@ -216,8 +218,7 @@ def view_main_menu():
 
 
 def view_tournament_menu():
-    i_correct_input = False
-    while not i_correct_input:
+    while True:
         print("1- Consultation tournois")
         print("2- Création nouveau tournoi")
         print("3- Retour au menu précédent")
@@ -225,82 +226,83 @@ def view_tournament_menu():
         try:
             entry = int(input())
             if entry == 1:
-                view_consultation_tournament()
-                i_correct_input = True
+               return view_consultation_tournament()
             elif entry == 2:
-                view_creation_tournament()
-                i_correct_input = True
+                return view_creation_tournament()
             elif entry == 3:
-                view_main_menu()
+                return view_main_menu()
             else:
                 print("Saisie incorrecte, veuillez recommencer :")
+                print("toto 1")
         except:
             print("Saisie incorrecte, veuillez recommencer :")
+            print("toto 2")
 
 
 def view_creation_tournament():
-    input_list = []
     i_tournament_created = False
-    while controller_creation_tournament(input_list) != "OK" and not i_tournament_created:
-        input_list = []
+    tournament_created = {}
+    while controller_creation_tournament(tournament_created) != "OK" and not i_tournament_created:
         print("Saisir le nom du tournoi :")
-        input_list.append(input())
+        tournament_created["name"] = input()
         print("Saisir le lieu du tournoi :")
-        input_list.append(input())
+        tournament_created["place"] = input()
         print("Saisir la date de début du tournoi (format JJ/MM/SSAA) :")
-        input_list.append(input())
+        tournament_created["start_date"] = input()
         print("Saisir la date de fin du tournoi (format JJ/MM/SSAA) - facultatif :")
-        input_list.append(input())
+        tournament_created["end_date"] = input()
         print("Saisir le nombre de tour du tournoi - facultatif (4 par défaut) :")
-        input_list.append(input())
+        tournament_created["number_of_tours"] = int(input())
         print("Saisir le contrôle du temps du tournoi. Saisir 'bullet', 'blitz' ou 'coup rapide'")
-        input_list.append(input())
+        tournament_created["time_control"] = input()
         print("Saisir la description du tournoi - facultatif :")
-        input_list.append(input())
-        if controller_creation_tournament(input_list) == "OK":
-            Tournament_instance = Tournament(input_list[0], input_list[1], input_list[2], input_list[3], input_list[4],
-                                             input_list[5], input_list[6])
-            TinyDB("tables.json").table("tournaments").insert(Tournament_instance.serialization())
+        tournament_created["description"] = input()
+        tournament_created["players"] = []
+        tournament_created["tours"] = []
+        if controller_creation_tournament(tournament_created) == "OK":
+            Tournament(tournament_created).save_table()
             print("Tournoi créé")
             i_tournament_created = True
             view_tournament_menu()
         else:
-            for i in range(len(controller_creation_tournament(input_list))):
-                print(controller_creation_tournament(input_list)[i])
+            for i in range(len(controller_creation_tournament(tournament_created))):
+                print(controller_creation_tournament(tournament_created)[i])
 
 
-def controller_creation_tournament(input_list_args):
-    if len(input_list_args) != 7:
+def controller_creation_tournament(tournament):
+    if len(tournament) <= 9:
         return "KO"
+
     errors = []
 
-    if len(input_list_args[0]) < 3:
+    if len(tournament["name"]) < 3:
         errors.append("Le nom du tournoi doit être renseigné.")
 
-    if TinyDB("tables.json").table("tournaments").search(Query().name == input_list_args[0]):
+    if TinyDB("tables.json").table("tournaments").search(Query().name == tournament["name"]):
         errors.append("Le tournoi a déjà été créé.")
 
-    if len(input_list_args[1]) < 3:
+    if len(tournament["place"]) < 3:
         errors.append("Le lieu du tournoi doit être renseigné.")
 
     try:
-        datetime.strptime(input_list_args[2], "%d/%m/%Y")
+        datetime.strptime(tournament["start_date"], "%d/%m/%Y")
     except:
         errors.append("La date de début du tournoi doit être une date valide au format JJ/MM/SSAA.")
 
     try:
-        datetime.strptime(input_list_args[3], "%d/%m/%Y")
+        datetime.strptime(tournament["end_date"], "%d/%m/%Y")
     except:
-        if not input_list_args[3] == '':
+        if not tournament["end_date"] == "":
             errors.append("La date de fin du tournoi doit être une date valide au format JJ/MM/SSAA.")
 
     try:
-        int(input_list_args[4])
+        int(tournament["number_of_tours"])
+        print("toto 3")
     except:
-        if not input_list_args[4] == '':
+        if not tournament["number_of_tours"] == "":
             errors.append("Le nombre de tours du tournoi doit être un nombre.")
 
-    if input_list_args[5] not in ['bullet', 'blitz', 'coup rapide']:
+    if tournament["time_control"] not in ['bullet', 'blitz', 'coup rapide']:
         errors.append("Le contrôle du temps est mal renseigné.")
 
     if not errors:
@@ -319,6 +321,7 @@ def view_consultation_tournament():
         while not i_menu_displayed:
             for iTournament in range(len(TinyDB("tables.json").table("tournaments").all())):
                 if entry == iTournament + 1:
+                    print(TinyDB("tables.json").table("tournaments").all()[iTournament])
                     tournament = Tournament(TinyDB("tables.json").table("tournaments").all()[iTournament])
                     print("Détails du tournoi sélectionné :")
                     print()
@@ -362,12 +365,10 @@ def view_add_players(tournament):
     print_number = 0
     players_available = []
     for player in TinyDB("tables.json").table("players").all():
-        print("toto")
         print(TinyDB("tables.json").table("players").search((Query().last_name == player["last_name"]) &
-                                                             (Query().first_name == player["first_name"])))
+                                                            (Query().first_name == player["first_name"])))
         if TinyDB("tables.json").table("players").search((Query().last_name == player["last_name"]) &
-                                                             (Query().first_name == player["first_name"])):
-            print("toto 2")
+                                                         (Query().first_name == player["first_name"])):
             print_number += 1
             players_available.append(player)
             print(print_number, "- ", player["last_name"], player["first_name"])
@@ -377,9 +378,12 @@ def view_add_players(tournament):
         i_menu_displayed = False
         while not i_menu_displayed:
             for iPlayer in range(len(players_available)):
-                if entry == iPlayer:
+                if entry == iPlayer + 1:
                     player = Player(TinyDB("tables.json").table("players").all()[iPlayer])
+                    print(tournament.players)
+                    print(player)
                     tournament.players.append(player)
+                    print(tournament.players)
                     tournament.save_table()
                     print("Joueur ajouté au tournoi")
                     print("Voulez-vous ajouter un autre joueur ? (O ou N)")
@@ -396,9 +400,6 @@ def view_add_players(tournament):
                 print("Saisie incorrecte, veuillez recommencer :")
     except:
         print("Saisie incorrecte, veuillez recommencer :")
-
-
-
 
 
 def view_player_menu():
