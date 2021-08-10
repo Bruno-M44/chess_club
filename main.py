@@ -15,7 +15,6 @@ class Tournament:
             self.number_of_tours = 4
         else:
             self.number_of_tours = dict_init["number_of_tours"]
-        self.tours = dict_init["tours"]
         self.tours = []
         for tour in dict_init["tours"]:
             self.tours.append(Tour(tour))
@@ -25,15 +24,10 @@ class Tournament:
         self.time_control = dict_init["time_control"]
         self.description = dict_init["description"]
 
-    def add_player(self, *players):
-        for i in players:
-            self.players.append(i)
-        self.save_table()
-
     def players_ranking(self):
         ranked_players = sorted(self.players, key=lambda players: (-players.score, players.ranking))
-        for i in ranked_players:
-            print(i.__dict__)
+        for player in ranked_players:
+            print(player.__dict__)
 
     def save_table(self):
         serialized_tournament = self.serialization()
@@ -53,87 +47,24 @@ class Tournament:
         for player in self.players:
             serialized_players.append(player.serialization())
         serialized_tournament["players"] = serialized_players
+        serialized_tours = []
+        for tour in self.tours:
+            serialized_tours.append(tour.serialization())
+        serialized_tournament["tours"] = serialized_tours
 
         return serialized_tournament
-        '''
-        serialized_tournament = copy.deepcopy(self.__dict__)  # to change made to a copy of object do not
-        # reflect in the original object.
-
-        for iPlayer in range(len(serialized_tournament['players'])):
-            serialized_tournament['players'][iPlayer] = serialized_tournament['players'][iPlayer].__dict__
-
-        for iTour in range(len(serialized_tournament['tours'])):
-            serialized_tournament['tours'][iTour] = serialized_tournament['tours'][iTour].__dict__
-            serialized_tournament['tours'][iTour]['tournament'] = serialized_tournament['name']
-            for iMatch in range(len(serialized_tournament['tours'][iTour]['matches'])):
-                serialized_tournament['tours'][iTour]['matches'][iMatch] = \
-                    serialized_tournament['tours'][iTour]['matches'][iMatch].__dict__
-                serialized_tournament['tours'][iTour]['matches'][iMatch]['player_1'] = \
-                    serialized_tournament['tours'][iTour]['matches'][iMatch]['player_1'].__dict__
-                serialized_tournament['tours'][iTour]['matches'][iMatch]['player_2'] = \
-                    serialized_tournament['tours'][iTour]['matches'][iMatch]['player_2'].__dict__
-                serialized_tournament['tours'][iTour]['matches'][iMatch]['tour'] = \
-                    serialized_tournament['tours'][iTour]['name']
-        return serialized_tournament
-        '''
-
-    @classmethod
-    def load_table(cls):
-        tournaments = []
-        for tournament in TinyDB("tables.json").all():
-            tournaments.append(Tournament(name=tournament['name'], place=tournament['place'],
-                                          start_date=tournament['start_date'], end_date=tournament['end_date'],
-                                          number_of_tours=tournament['number_of_tours'],
-                                          time_control=tournament['time_control'],
-                                          description=tournament['description']))
-        return tournaments
-
-
-class Player:
-    def __init__(self, dict_init):
-        self.last_name = dict_init["last_name"]
-        self.first_name = dict_init["first_name"]
-        self.birthday = dict_init["birthday"]
-        self.gender = dict_init["gender"]
-        self.ranking = dict_init["ranking"]
-
-    #        self.score = 0
-    #        self.players_met = []
-
-    def serialization(self):
-        serialized_player = {
-            "last_name": self.last_name,
-            "first_name": self.first_name,
-            "birthday": self.birthday,
-            "gender": self.gender,
-            "ranking": self.ranking,
-        }
-        return serialized_player
-
-    def save_table(self):
-        TinyDB("players.json").upsert(self.__dict__, (Query().last_name == self.last_name) &
-                                      (Query().first_name == self.first_name))
-
-
-class Tour:
-    def __init__(self, name, start_date, end_date, tournament):
-        self.name = name
-        self.start_date = start_date
-        self.end_date = end_date
-        self.matches = []
-        self.tournament = tournament
-        self.tournament.tours.append(self)
-        self.tournament.save_table()
 
     def generate_a_tour(self):
-        if not self.tournament.tours[0].matches:
-            players_sorted = sorted(self.tournament.players, key=lambda players: players.ranking)
+        if not self.tours[0].matches:
+            players_sorted = sorted(self.players, key=lambda players: int(players.ranking))
             for i in range(int(len(players_sorted) / 2)):
-                self.matches.append(Match(players_sorted[i], 0,
-                                          players_sorted[int(len(players_sorted) / 2 + i)], 0, self))
-            self.tournament.save_table()
+                self.tours[0].matches.append(Match({"player_1": players_sorted[i],
+                                                    "score_1": 0,
+                                                    "player_2": players_sorted[int(len(players_sorted) / 2 + i)],
+                                                    "score_2": 0}))
+        '''
         else:
-            players_sorted = sorted(self.tournament.players, key=lambda players: (-players.score, players.ranking))
+            players_sorted = sorted(self.players, key=lambda players: (-players.score, players.ranking))
             # sorted by score (decreasing with the sign -) and ranking
             players_assigned = []
             for i in range(len(players_sorted)):
@@ -159,6 +90,59 @@ class Tour:
                                         players_assigned.append(str(i))
                                         players_assigned.append(str(j))
             self.tournament.save_table()
+'''
+
+
+class Player:
+    def __init__(self, dict_init):
+        self.last_name = dict_init["last_name"]
+        self.first_name = dict_init["first_name"]
+        self.birthday = dict_init["birthday"]
+        self.gender = dict_init["gender"]
+        self.ranking = dict_init["ranking"]
+
+    #        self.score = 0
+    #        self.players_met = []
+
+    def serialization(self):
+        serialized_player = {
+            "last_name": self.last_name,
+            "first_name": self.first_name,
+            "birthday": self.birthday,
+            "gender": self.gender,
+            "ranking": self.ranking,
+        }
+        return serialized_player
+
+    def save_table(self):
+        serialized_player = self.serialization()
+        TinyDB("tables.json").table("players").upsert(serialized_player, (Query().last_name == self.last_name) &
+                                                      (Query().first_name == self.first_name))
+
+
+class Tour:
+    def __init__(self, dict_init):
+        self.name = dict_init["name"]
+        self.start_date = dict_init["start_date"]
+        self.end_date = dict_init["end_date"]
+        self.matches = []
+        for match in dict_init["matches"]:
+            self.matches.append(Match(match))
+        # self.tournament = tournament
+        # self.tournament.tours.append(self)
+
+    def serialization(self):
+        serialized_tour = {
+            "name": self.name,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+        }
+        serialized_matches = []
+        for match in self.matches:
+            serialized_matches.append(match.serialization())
+        serialized_tour["matches"] = serialized_matches
+
+        return serialized_tour
 
     def results(self):
         for match in self.matches:
@@ -185,12 +169,20 @@ class Tour:
 
 
 class Match:
-    def __init__(self, player_1, score_1, player_2, score_2, tour):
-        self.player_1 = player_1
-        self.score_1 = score_1
-        self.player_2 = player_2
-        self.score_2 = score_2
-        self.tour = tour
+    def __init__(self, dict_init):
+        self.player_1 = dict_init["player_1"]
+        self.score_1 = dict_init["score_1"]
+        self.player_2 = dict_init["player_2"]
+        self.score_2 = dict_init["score_2"]
+
+    def serialization(self):
+        serialized_match = {
+            "player_1": self.player_1.serialization(),
+            "score_1": self.score_1,
+            "player_2": self.player_2.serialization(),
+            "score_2": self.score_2
+        }
+        return serialized_match
 
 
 def main():
@@ -226,17 +218,15 @@ def view_tournament_menu():
         try:
             entry = int(input())
             if entry == 1:
-               return view_consultation_tournament()
+                return view_consultation_tournament_menu()
             elif entry == 2:
                 return view_creation_tournament()
             elif entry == 3:
                 return view_main_menu()
             else:
                 print("Saisie incorrecte, veuillez recommencer :")
-                print("toto 1")
         except:
             print("Saisie incorrecte, veuillez recommencer :")
-            print("toto 2")
 
 
 def view_creation_tournament():
@@ -252,7 +242,7 @@ def view_creation_tournament():
         print("Saisir la date de fin du tournoi (format JJ/MM/SSAA) - facultatif :")
         tournament_created["end_date"] = input()
         print("Saisir le nombre de tour du tournoi - facultatif (4 par défaut) :")
-        tournament_created["number_of_tours"] = int(input())
+        tournament_created["number_of_tours"] = input()
         print("Saisir le contrôle du temps du tournoi. Saisir 'bullet', 'blitz' ou 'coup rapide'")
         tournament_created["time_control"] = input()
         print("Saisir la description du tournoi - facultatif :")
@@ -270,8 +260,8 @@ def view_creation_tournament():
 
 
 def controller_creation_tournament(tournament):
-    if len(tournament) <= 9:
-        return "KO"
+    if tournament == {}:
+        return tournament
 
     errors = []
 
@@ -297,7 +287,6 @@ def controller_creation_tournament(tournament):
 
     try:
         int(tournament["number_of_tours"])
-        print("toto 3")
     except:
         if not tournament["number_of_tours"] == "":
             errors.append("Le nombre de tours du tournoi doit être un nombre.")
@@ -311,53 +300,82 @@ def controller_creation_tournament(tournament):
     return errors
 
 
-def view_consultation_tournament():
+def view_consultation_tournament_menu():
     for iTournament in range(len(TinyDB("tables.json").table("tournaments").all())):
         print(iTournament + 1, "- ", TinyDB("tables.json").table("tournaments").all()[iTournament]["name"])
     print("Sélectionner le tournoi sur le quel vous voulez agir :")
-    try:
-        entry = int(input())
-        i_menu_displayed = False
-        while not i_menu_displayed:
+    while True:
+        try:
+            entry = int(input())
             for iTournament in range(len(TinyDB("tables.json").table("tournaments").all())):
                 if entry == iTournament + 1:
-                    print(TinyDB("tables.json").table("tournaments").all()[iTournament])
-                    tournament = Tournament(TinyDB("tables.json").table("tournaments").all()[iTournament])
-                    print("Détails du tournoi sélectionné :")
-                    print()
-                    print("Nom : ", tournament.name)
-                    print("Lieu : ", tournament.place)
-                    print("Date de début : ", tournament.start_date)
-                    print("Date de fin : ", tournament.end_date)
-                    print("Nombre de tours : ", tournament.number_of_tours)
-                    print("Contrôle du temps : ", tournament.time_control)
-                    print("Description : ", tournament.description)
-                    print()
-                    print("Sélectionner l'action désirée :")
-                    print("1- Liste de tous les joueurs par ordre alphabétique")
-                    print("2- Liste de tous les joueurs par classement")
-                    print("3- Ajout joueurs")
-                    print("4- Liste de tous les tours d'un tournoi")
-                    print("5- Liste de tous les matchs d'un tournoi")
-                    print("6- Modification informations tournoi")
-                    print("7- Retour au menu précédent")
-                    # ajout génération tour et saisie résultats
-                    i_menu_displayed = True
-                    try:
-                        entry = int(input())
-                        if entry == 1:
-                            print("1")
-                        elif entry == 2:
-                            print("2")
-                        elif entry == 3:
-                            view_add_players(tournament)
-                    except:
-                        print("Saisie incorrecte, veuillez recommencer :")
+                    return view_consultation_tournament(Tournament(TinyDB("tables.json").
+                                                                   table("tournaments").all()[iTournament]))
+            print("Saisie incorrecte, veuillez recommencer :")
+        except:
+            print("Saisie incorrecte, veuillez recommencer :")
 
-            if not i_menu_displayed:
-                print("Saisie incorrecte, veuillez recommencer :")
+
+def view_consultation_tournament(tournament):
+    print("Détails du tournoi sélectionné :")
+    print()
+    print("Nom : ", tournament.name)
+    print("Lieu : ", tournament.place)
+    print("Date de début : ", tournament.start_date)
+    print("Date de fin : ", tournament.end_date)
+    print("Nombre de tours : ", tournament.number_of_tours)
+    print("Contrôle du temps : ", tournament.time_control)
+    print("Description : ", tournament.description)
+    print()
+    print("Sélectionner l'action désirée :")
+    print("1- Liste de tous les joueurs par ordre alphabétique")
+    print("2- Liste de tous les joueurs par classement")
+    print("3- Ajout joueurs")
+    print("4- Générer un tour")
+    print("5- Liste de tous les matchs d'un tournoi")
+    print("6- Modification informations tournoi")
+    print("7- Retour au menu précédent")
+    # ajout génération tour et saisie résultats
+    try:
+        entry = int(input())
+        if entry == 1:
+            return view_players_by_alphabetical_order(tournament)
+        elif entry == 2:
+            return view_players_by_ranking(tournament)
+        elif entry == 3:
+            return view_add_players(tournament)
+        elif entry == 4:
+            return view_generate_a_tour(tournament)
+        else:
+            return view_tournament_menu()
     except:
         print("Saisie incorrecte, veuillez recommencer :")
+
+
+def view_players_by_alphabetical_order(tournament):
+    print("Voici la liste des joueurs du tournoi classés par ordre alphabétique (Nom, Prénom, "
+          "date de naissance, sexe, classement) :")
+    print()
+    alphabetical_order_players = sorted(tournament.players, key=lambda players: (players.last_name, players.first_name))
+    for player in alphabetical_order_players:
+        print(player.__dict__["last_name"], player.__dict__["first_name"], player.__dict__["birthday"],
+              player.__dict__["gender"], player.__dict__["ranking"], sep=", ")
+    print("Appuyer sur entrée pour revenir au menu précédent")
+    input()
+    return view_consultation_tournament(tournament)
+
+
+def view_players_by_ranking(tournament):
+    print("Voici la liste des joueurs du tournoi classés par classement (Nom, Prénom, "
+          "date de naissance, sexe, classement) :")
+    print()
+    ranking_players = sorted(tournament.players, key=lambda players: int(players.ranking))
+    for player in ranking_players:
+        print(player.__dict__["last_name"], player.__dict__["first_name"], player.__dict__["birthday"],
+              player.__dict__["gender"], player.__dict__["ranking"], sep=", ")
+    print("Appuyer sur entrée pour revenir au menu précédent")
+    input()
+    return view_consultation_tournament(tournament)
 
 
 def view_add_players(tournament):
@@ -365,41 +383,89 @@ def view_add_players(tournament):
     print_number = 0
     players_available = []
     for player in TinyDB("tables.json").table("players").all():
-        print(TinyDB("tables.json").table("players").search((Query().last_name == player["last_name"]) &
-                                                            (Query().first_name == player["first_name"])))
-        if TinyDB("tables.json").table("players").search((Query().last_name == player["last_name"]) &
-                                                         (Query().first_name == player["first_name"])):
+        available = True
+        for player_unavailable in tournament.players:
+            if (player_unavailable.__dict__["last_name"] == player["last_name"] and
+                    player_unavailable.__dict__["first_name"] == player["first_name"]):
+                available = False
+        if available:
+            players_available.append(Player(player))
             print_number += 1
-            players_available.append(player)
             print(print_number, "- ", player["last_name"], player["first_name"])
+    if not players_available:
+        print("Vous ne pouvez pas ajouter de joueur à ce tournoi. Veuillez créer un autre joueur.")
+        return view_consultation_tournament_menu()
+
     print("Sélectionner le joueur que vous voulez ajouter :")
     try:
         entry = int(input())
-        i_menu_displayed = False
-        while not i_menu_displayed:
+        while True:
             for iPlayer in range(len(players_available)):
                 if entry == iPlayer + 1:
-                    player = Player(TinyDB("tables.json").table("players").all()[iPlayer])
-                    print(tournament.players)
-                    print(player)
-                    tournament.players.append(player)
-                    print(tournament.players)
+                    tournament.players.append(players_available[iPlayer])
                     tournament.save_table()
                     print("Joueur ajouté au tournoi")
                     print("Voulez-vous ajouter un autre joueur ? (O ou N)")
                     entry = input()
                     if entry == "O":
-                        view_add_players(tournament)
-                        i_menu_displayed = True
+                        return view_add_players(tournament)
                     elif entry == "N":
-                        view_consultation_tournament()
-                        i_menu_displayed = True
+                        return view_consultation_tournament(tournament)
                     else:
                         print("Saisie incorrecte, veuillez recommencer :")
-            if not i_menu_displayed:
-                print("Saisie incorrecte, veuillez recommencer :")
+            print("Saisie incorrecte, veuillez recommencer :")
     except:
         print("Saisie incorrecte, veuillez recommencer :")
+
+
+def view_generate_a_tour(tournament):
+    tour_created = {}
+    while controller_creation_tour(tour_created) != "OK":
+        print("Saisir le nom du tour :")
+        tour_created["name"] = input()
+        print("Saisir la date de début du tour (format JJ/MM/SSAA) :")
+        tour_created["start_date"] = input()
+        print("Saisir la date de fin du tour (format JJ/MM/SSAA) - si non renseigné, le tour sera par "
+              "défaut sur 1 journée :")
+        tour_created["end_date"] = input()
+        tour_created["matches"] = []
+        if controller_creation_tour(tour_created) == "OK":
+            tournament.tours.append(Tour(tour_created))
+            tournament.generate_a_tour()
+            tournament.save_table()
+            print("Le tour a été généré")
+            return view_consultation_tournament(tournament)
+        else:
+            for i in range(len(controller_creation_tour(tour_created))):
+                print(controller_creation_tour(tour_created)[i])
+
+
+def controller_creation_tour(tour):
+    if tour == {}:
+        return tour
+
+    errors = []
+
+    if len(tour["name"]) < 3:
+        errors.append("Le nom du tour doit être renseigné.")
+
+    try:
+        datetime.strptime(tour["start_date"], "%d/%m/%Y")
+    except:
+        errors.append("La date de début du tour doit être une date valide au format JJ/MM/SSAA.")
+
+    try:
+        datetime.strptime(tour["end_date"], "%d/%m/%Y")
+    except:
+        if tour["end_date"] == "":
+            tour["end_date"] = tour["start_date"]
+        else:
+            errors.append("La date de fin du tour doit être une date valide au format JJ/MM/SSAA.")
+
+    if not errors:
+        errors = "OK"
+
+    return errors
 
 
 def view_player_menu():
@@ -412,7 +478,7 @@ def view_player_menu():
         try:
             entry = int(input())
             if entry == 1:
-                view_consultation_player()
+                view_consultation_player_menu()
                 i_correct_input = True
             elif entry == 2:
                 view_creation_player()
@@ -426,99 +492,97 @@ def view_player_menu():
             print("Saisie incorrecte, veuillez recommencer :")
 
 
-def view_consultation_player():
+def view_consultation_player_menu():
     for iPlayer in range(len(TinyDB("tables.json").table("players").all())):
         print(iPlayer + 1, "- ", TinyDB("tables.json").table("players").all()[iPlayer]["last_name"],
               TinyDB("tables.json").table("players").all()[iPlayer]["first_name"])
-    print("Sélectionner le joueur sur le quel vous voulez agir :")
-    try:
-        entry = int(input())
-        i_menu_displayed = False
-        while not i_menu_displayed:
+    print("Sélectionner le joueur sur lequel vous voulez agir :")
+    while True:
+        try:
+            entry = int(input())
             for iPlayer in range(len(TinyDB("tables.json").table("players").all())):
                 if entry == iPlayer + 1:
-                    print("Détails du joueur sélectionné :")
-                    print()
-                    print("Nom : ", TinyDB("tables.json").table("players").all()[iPlayer]["last_name"])
-                    print("Prénom : ", TinyDB("tables.json").table("players").all()[iPlayer]["first_name"])
-                    print("Date d'anniversaire : ",
-                          TinyDB("tables.json").table("players").all()[iPlayer]["birthday"])
-                    print("Sexe : ", TinyDB("tables.json").table("players").all()[iPlayer]["gender"])
-                    print("Classement : ", TinyDB("tables.json").table("players").all()[iPlayer]["ranking"])
-                    print()
-                    print("Sélectionner l'action désirée :")
-                    print("1- Modification informations joueur")
-                    print("2- Retour au menu précédent")
-                    try:
-                        entry = int(input())
-                        if entry == 1:
-                            print("modifications, à compléter")
-                            i_menu_displayed = True
-                        elif entry == 2:
-                            view_player_menu()
-                            i_menu_displayed = True
-                        else:
-                            print("Saisie incorrecte, veuillez recommencer :")
-                    except:
-                        print("Saisie incorrecte, veuillez recommencer :")
-            if not i_menu_displayed:
+                    return view_consultation_player(Player(TinyDB("tables.json").table("players").all()[iPlayer]))
+            print("Saisie incorrecte, veuillez recommencer :")
+        except:
+            print("Saisie incorrecte, veuillez recommencer :")
+
+
+def view_consultation_player(player):
+    print("Détails du joueur sélectionné :")
+    print()
+    print("Nom : ", player.last_name)
+    print("Prénom : ", player.first_name)
+    print("Date d'anniversaire : ", player.birthday)
+    print("Sexe : ", player.gender)
+    print("Classement : ", player.ranking)
+    print()
+    print("Sélectionner l'action désirée :")
+    print("1- Modification informations joueur")
+    print("2- Retour au menu précédent")
+    while True:
+        try:
+            entry = int(input())
+            if entry == 1:
+                return "modifications, à compléter"
+            elif entry == 2:
+                return view_player_menu()
+            else:
                 print("Saisie incorrecte, veuillez recommencer :")
-    except:
-        print("Saisie incorrecte, veuillez recommencer :")
+        except:
+            print("Saisie incorrecte, veuillez recommencer :")
 
 
 def view_creation_player():
-    input_list = []
     i_player_created = False
-    while controller_creation_player(input_list) != "OK" and not i_player_created:
-        input_list = []
+    player_created = {}
+    while controller_creation_player(player_created) != "OK" and not i_player_created:
         print("Saisir le nom du joueur :")
-        input_list.append(input())
+        player_created["last_name"] = input()
         print("Saisir le prénom du joueur :")
-        input_list.append(input())
+        player_created["first_name"] = input()
         print("Saisir la date de naissance (format JJ/MM/SSAA) :")
-        input_list.append(input())
+        player_created["birthday"] = input()
         print("Saisir le sexe (M ou F) :")
-        input_list.append(input())
+        player_created["gender"] = input()
         print("Saisir le classement :")
-        input_list.append(input())
-        if controller_creation_player(input_list) == "OK":
-            Player_instance = Player(input_list[0], input_list[1], input_list[2], input_list[3], input_list[4])
-            TinyDB("tables.json").table("players").insert(Player_instance.serialization())
+        player_created["ranking"] = input()
+        if controller_creation_player(player_created) == "OK":
+            Player(player_created).save_table()
             print("Joueur créé")
             i_player_created = True
             view_player_menu()
         else:
-            for i in controller_creation_player(input_list):
+            for i in controller_creation_player(player_created):
                 print(i)
 
 
-def controller_creation_player(input_list_args):
-    if len(input_list_args) != 5:
-        return "KO"
+def controller_creation_player(player):
+    if player == {}:
+        return player
     errors = []
 
-    if len(input_list_args[0]) < 3:
+    if len(player["last_name"]) < 3:
         errors.append("Le nom du joueur doit être renseigné.")
 
-    if len(input_list_args[1]) < 3:
+    if len(player["first_name"]) < 3:
         errors.append("Le prénom du joueur doit être renseigné.")
 
-    if TinyDB("tables.json").table("players").search((Query().last_name == input_list_args[0]) &
-                                                     (Query().first_name == input_list_args[1])):
+    if TinyDB("tables.json").table("players").search((Query().last_name == player["last_name"]) &
+                                                     (Query().first_name == player["first_name"])):
         errors.append("Le joueur a déjà été créé.")
 
     try:
-        datetime.strptime(input_list_args[2], "%d/%m/%Y")
+        datetime.strptime(player["birthday"], "%d/%m/%Y")
     except:
         errors.append("La date d'anniversaire doit être une date valide au format JJ/MM/SSAA.")
 
-    if input_list_args[3] not in ['M', 'F']:
+    if player["gender"] not in ['M', 'F']:
         errors.append("Le sexe est mal renseigné")
 
     try:
-        int(input_list_args[4])
-        if int(input_list_args[4]) <= 0:
+        int(player["ranking"])
+        if int(player["ranking"]) <= 0:
             errors.append("Le classement doit être un entier positif.")
     except:
         errors.append("Le classement doit être un entier positif.")
