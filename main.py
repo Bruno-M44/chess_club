@@ -54,43 +54,88 @@ class Tournament:
 
         return serialized_tournament
 
+    def player_score(self, player):
+        score = 0
+        for tour in self.tours:
+            for match in tour.matches:
+                if match.player_1.__dict__ == player.__dict__:
+                    score += match.score_1
+                elif match.player_2.__dict__ == player.__dict__:
+                    score += match.score_2
+        return score
+
+    def players_met(self, player):
+        players_met = []
+        for tour in self.tours:
+            for match in tour.matches:
+                if match.player_1.__dict__ == player.__dict__:
+                    players_met.append(match.player_2.__dict__)
+                elif match.player_2.__dict__ == player.__dict__:
+                    players_met.append(match.player_1.__dict__)
+        return players_met
+
+    def player_played_this_tour(self, player):
+        player_played = False
+        for match in self.tours[-1].matches:
+            if match.player_1.__dict__ == player.__dict__:
+                player_played = True
+            elif match.player_2.__dict__ == player.__dict__:
+                player_played = True
+        return player_played
+
     def generate_a_tour(self):
         if not self.tours[0].matches:
             players_sorted = sorted(self.players, key=lambda players: int(players.ranking))
-            for i in range(int(len(players_sorted) / 2)):
-                self.tours[0].matches.append(Match({"player_1": players_sorted[i],
+            print(self.tours[0].matches)
+            for iPlayer in range(int(len(players_sorted) / 2)):
+                self.tours[0].matches.append(Match({"player_1": players_sorted[iPlayer].__dict__,
                                                     "score_1": 0,
-                                                    "player_2": players_sorted[int(len(players_sorted) / 2 + i)],
+                                                    "player_2":
+                                                        players_sorted[int(len(players_sorted) / 2 + iPlayer)].__dict__,
                                                     "score_2": 0}))
-        '''
         else:
-            players_sorted = sorted(self.players, key=lambda players: (-players.score, players.ranking))
+            players_sorted = sorted(self.players, key=lambda player: (-self.player_score(player), int(player.ranking)))
             # sorted by score (decreasing with the sign -) and ranking
-            players_assigned = []
-            for i in range(len(players_sorted)):
-                iAttribution = 0
-                if not str(i) in players_assigned:
-                    for j in range(i + 1, len(players_sorted)):
-                        if not str(j) in players_assigned:
-                            if not str(players_sorted[i].first_name + ' ' + players_sorted[i].last_name) in \
-                                   players_sorted[j].players_met:
-                                if iAttribution == 0:
-                                    self.matches.append(Match(players_sorted[i], 0, players_sorted[j], 0, self))
-                                    iAttribution = 1
-                                    players_assigned.append(str(i))
-                                    players_assigned.append(str(j))
-                    if iAttribution == 0:
-                        for j in range(i):
-                            if not str(j) in players_assigned:
-                                if not str(players_sorted[i].first_name + ' ' + players_sorted[i].last_name) in \
-                                       players_sorted[j].players_met:
-                                    if iAttribution == 0:
-                                        self.matches.append(Match(players_sorted[i], 0, players_sorted[j], 0, self))
-                                        iAttribution = 1
-                                        players_assigned.append(str(i))
-                                        players_assigned.append(str(j))
-            self.tournament.save_table()
-'''
+            for iPlayer in range(len(players_sorted)):
+                if not self.player_played_this_tour(players_sorted[iPlayer]):
+                    j = 1
+                    end_loop = False
+                    if j+iPlayer <= len(players_sorted)-1:
+                        while players_sorted[iPlayer + j].__dict__ in self.players_met(players_sorted[iPlayer]) \
+                                and j+iPlayer <= len(players_sorted)-1 and not end_loop:
+                            j += 1
+                            if j+iPlayer > len(players_sorted)-1:
+                                j = 0
+                                end_loop = True
+
+                        if not players_sorted[iPlayer + j].__dict__ in self.players_met(players_sorted[iPlayer]):
+                            self.tours[-1].matches.append(Match({"player_1": players_sorted[iPlayer].__dict__,
+                                                                 "score_1": 0,
+                                                                 "player_2": players_sorted[iPlayer + j].__dict__,
+                                                                 "score_2": 0
+                                                                 }))
+
+    def results(self):
+        for match in self.matches:
+            print("Player 1 :", match.__dict__['player_1'].__dict__)
+            print("Player 2 :", match.__dict__['player_2'].__dict__)
+            print("Vainqueur ? (1, 2 ou N pour nul)")
+            result = str(input())
+            while result != "1" and result != "2" and result != "N":
+                print("Vous devez saisir 1, 2 ou N. Recommencer.")
+                result = str(input())
+            if result == "1":
+                match.score_1 = 1
+                match.player_1.score += 1
+            elif result == "2":
+                match.score_2 = 1
+                match.player_2.score += 1
+            else:
+                match.score_1 = match.score_2 = 0.5
+                match.player_1.score += 0.5
+                match.player_2.score += 0.5
+            match.player_1.players_met.append(match.player_2.first_name + ' ' + match.player_2.last_name)
+            match.player_2.players_met.append(match.player_1.first_name + ' ' + match.player_1.last_name)
 
 
 class Player:
@@ -144,35 +189,12 @@ class Tour:
 
         return serialized_tour
 
-    def results(self):
-        for match in self.matches:
-            print("Player 1 :", match.__dict__['player_1'].__dict__)
-            print("Player 2 :", match.__dict__['player_2'].__dict__)
-            print("Vainqueur ? (1, 2 ou N pour nul)")
-            result = str(input())
-            while result != "1" and result != "2" and result != "N":
-                print("Vous devez saisir 1, 2 ou N. Recommencer.")
-                result = str(input())
-            if result == "1":
-                match.score_1 = 1
-                match.player_1.score += 1
-            elif result == "2":
-                match.score_2 = 1
-                match.player_2.score += 1
-            else:
-                match.score_1 = match.score_2 = 0.5
-                match.player_1.score += 0.5
-                match.player_2.score += 0.5
-            match.player_1.players_met.append(match.player_2.first_name + ' ' + match.player_2.last_name)
-            match.player_2.players_met.append(match.player_1.first_name + ' ' + match.player_1.last_name)
-        self.tournament.save_table()
-
 
 class Match:
     def __init__(self, dict_init):
-        self.player_1 = dict_init["player_1"]
+        self.player_1 = Player(dict_init["player_1"])
         self.score_1 = dict_init["score_1"]
-        self.player_2 = dict_init["player_2"]
+        self.player_2 = Player(dict_init["player_2"])
         self.score_2 = dict_init["score_2"]
 
     def serialization(self):
@@ -330,24 +352,57 @@ def view_consultation_tournament(tournament):
     print("Sélectionner l'action désirée :")
     print("1- Liste de tous les joueurs par ordre alphabétique")
     print("2- Liste de tous les joueurs par classement")
-    print("3- Ajout joueurs")
-    print("4- Générer un tour")
-    print("5- Liste de tous les matchs d'un tournoi")
-    print("6- Modification informations tournoi")
-    print("7- Retour au menu précédent")
-    # ajout génération tour et saisie résultats
+    if not tournament.tours:
+        print("3- Ajout joueurs")
+        print("4- Générer un tour")
+        print("5- Liste de tous les matchs d'un tournoi")
+        print("6- Modification informations tournoi")
+        print("7- Retour au menu précédent")
+    elif tournament.tours[-1].matches[0].score_1 == 0 and tournament.tours[-1].matches[0].score_2 == 0:
+        print("3- Rentrer les résultats du dernier tour généré")
+        print("4- Liste de tous les matchs d'un tournoi")
+        print("5- Modification informations tournoi")
+        print("6- Retour au menu précédent")
+    elif len(tournament.tours) < tournament.number_of_tours:
+        print("3- Générer un tour")
+        print("4- Liste de tous les matchs d'un tournoi")
+        print("5- Modification informations tournoi")
+        print("6- Retour au menu précédent")
+    else:
+        print("3- Liste de tous les matchs d'un tournoi")
+        print("4- Modification informations tournoi")
+        print("5- Retour au menu précédent")
+
     try:
         entry = int(input())
-        if entry == 1:
-            return view_players_by_alphabetical_order(tournament)
-        elif entry == 2:
-            return view_players_by_ranking(tournament)
-        elif entry == 3:
-            return view_add_players(tournament)
-        elif entry == 4:
-            return view_generate_a_tour(tournament)
+        if not tournament.tours:
+            if entry == 1:
+                return view_players_by_alphabetical_order(tournament)
+            elif entry == 2:
+                return view_players_by_ranking(tournament)
+            elif entry == 3:
+                return view_add_players(tournament)
+            elif entry == 4:
+                return view_generate_a_tour(tournament)
+        elif tournament.tours[-1].matches[0].score_1 == 0 and tournament.tours[-1].matches[0].score_2 == 0:
+            if entry == 1:
+                return view_players_by_alphabetical_order(tournament)
+            elif entry == 2:
+                return view_players_by_ranking(tournament)
+            elif entry == 3:
+                return view_results_entry(tournament)
+        elif len(tournament.tours) < tournament.number_of_tours:
+            if entry == 1:
+                return view_players_by_alphabetical_order(tournament)
+            elif entry == 2:
+                return view_players_by_ranking(tournament)
+            elif entry == 3:
+                return view_generate_a_tour(tournament)
         else:
-            return view_tournament_menu()
+            if entry == 1:
+                return view_players_by_alphabetical_order(tournament)
+            elif entry == 2:
+                return view_players_by_ranking(tournament)
     except:
         print("Saisie incorrecte, veuillez recommencer :")
 
@@ -438,6 +493,27 @@ def view_generate_a_tour(tournament):
         else:
             for i in range(len(controller_creation_tour(tour_created))):
                 print(controller_creation_tour(tour_created)[i])
+
+
+def view_results_entry(tournament):
+    for match in tournament.tours[-1].matches:
+        print("Joueur 1 :", match.player_1.last_name, " ", match.player_1.first_name)
+        print("rencontre")
+        print("Joueur 2 :", match.player_2.last_name, " ", match.player_2.first_name)
+        print("Vainqueur ? (1, 2 ou N pour nul)")
+        result = str(input())
+        while result != "1" and result != "2" and result != "N":
+            print("Vous devez saisir 1, 2 ou N. Recommencer.")
+            result = str(input())
+        if result == "1":
+            match.score_1 = 1
+        elif result == "2":
+            match.score_2 = 1
+        else:
+            match.score_1 = match.score_2 = 0.5
+    tournament.save_table()
+    print("Les résultats ont été sauvegardés")
+    return view_consultation_tournament(tournament)
 
 
 def controller_creation_tour(tour):
@@ -562,10 +638,10 @@ def controller_creation_player(player):
         return player
     errors = []
 
-    if len(player["last_name"]) < 3:
+    if len(player["last_name"]) < 2:
         errors.append("Le nom du joueur doit être renseigné.")
 
-    if len(player["first_name"]) < 3:
+    if len(player["first_name"]) < 2:
         errors.append("Le prénom du joueur doit être renseigné.")
 
     if TinyDB("tables.json").table("players").search((Query().last_name == player["last_name"]) &
