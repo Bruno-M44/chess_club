@@ -99,21 +99,20 @@ class Tournament:
             for iPlayer in range(len(players_sorted)):
                 if not self.player_played_this_tour(players_sorted[iPlayer]):
                     j = 1
-                    end_loop = False
-                    if j+iPlayer <= len(players_sorted)-1:
-                        while players_sorted[iPlayer + j].__dict__ in self.players_met(players_sorted[iPlayer]) \
-                                and j+iPlayer <= len(players_sorted)-1 and not end_loop:
-                            j += 1
-                            if j+iPlayer > len(players_sorted)-1:
-                                j = 0
-                                end_loop = True
-
-                        if not players_sorted[iPlayer + j].__dict__ in self.players_met(players_sorted[iPlayer]):
-                            self.tours[-1].matches.append(Match({"player_1": players_sorted[iPlayer].__dict__,
-                                                                 "score_1": 0,
-                                                                 "player_2": players_sorted[iPlayer + j].__dict__,
-                                                                 "score_2": 0
-                                                                 }))
+                    while True:
+                        try:
+                            player_met = players_sorted[iPlayer + j].__dict__ in self.players_met(players_sorted[iPlayer])
+                            if player_met:
+                                j += 1
+                            else:
+                                self.tours[-1].matches.append(Match({"player_1": players_sorted[iPlayer].__dict__,
+                                                                     "score_1": 0,
+                                                                     "player_2": players_sorted[iPlayer + j].__dict__,
+                                                                     "score_2": 0
+                                                                     }))
+                                break
+                        except:
+                            break
 
     def results(self):
         for match in self.matches:
