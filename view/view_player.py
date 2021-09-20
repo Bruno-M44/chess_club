@@ -73,16 +73,15 @@ class ViewPlayerByTournament(Tournament):
                         self.players.append(players_available[iPlayer])
                         self.save_table()
                         print("Joueur ajouté au tournoi")
-                        print("Voulez-vous ajouter un autre joueur ? (O ou N)")
+                        print("Voulez-vous ajouter un autre joueur ? O ou "
+                              "autre touche)")
                         entry = input()
                         if entry == "O":
                             return ViewPlayerByTournament. \
                                 view_add_players(self)
-                        elif entry == "N":
+                        else:
                             return ViewTournamentByTournament. \
                                 view_consultation_tournament(self)
-                        else:
-                            print("Saisie incorrecte, veuillez recommencer :")
                 print("Saisie incorrecte, veuillez recommencer :")
         except ValueError:
             print("Saisie incorrecte, veuillez recommencer :")
