@@ -19,6 +19,6 @@
 Un menu apparaît où vous pouvez naviguer pour consulter et gérer les tournois d'échecs que vous souhaitez.
 
 ## Lancer flake8 afin de vérifier que le code respecte les normes PEP8 : 
-	`flake8 'chess_club' > flake8.html`
+	`flake8 controller main.py models view > flake8.html`
 
 Un fichier flake8.html est apparu à la racine du répertoire qui doit être vide prouvant qu'il n'y a pas d'erreur.
