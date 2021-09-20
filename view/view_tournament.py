@@ -120,12 +120,12 @@ class ViewTournamentByTournament(Tournament):
             print("3- Ajout joueurs")
             print("4- Générer un tour")
             print("5- Retour au menu précédent")
-        elif self.tours[-1].matches:
-            if self.tours[-1].matches[0].score_1 == 0 and \
-                    self.tours[-1].matches[0].score_2 == 0:
-                print("3- Rentrer les résultats du dernier tour généré")
-                print("4- Liste de tous les matchs d'un tournoi")
-                print("5- Retour au menu précédent")
+        elif self.tours[-1].matches and \
+                self.tours[-1].matches[0].score_1 == 0 and \
+                self.tours[-1].matches[0].score_2 == 0:
+            print("3- Rentrer les résultats du dernier tour généré")
+            print("4- Liste de tous les matchs d'un tournoi")
+            print("5- Retour au menu précédent")
         elif len(self.tours) < self.number_of_tours:
             print("3- Générer un tour")
             print("4- Liste de tous les matchs d'un tournoi")
@@ -164,26 +164,26 @@ class ViewTournamentByTournament(Tournament):
                 else:
                     print("Saisie incorrecte, veuillez recommencer :")
                     return ViewTournament.view_consultation_tournament(self)
-            elif self.tours[-1].matches:
-                if self.tours[-1].matches[0].score_1 == 0 and \
-                        self.tours[-1].matches[0].score_2 == 0:
-                    if entry == 1:
-                        return ViewPlayerByTournament.\
-                            view_players_by_alphabetical_order(self)
-                    elif entry == 2:
-                        return ViewPlayerByTournament.view_players_by_ranking(
-                            self)
-                    elif entry == 3:
-                        return ViewMatch.view_results_entry(self)
-                    elif entry == 4:
-                        return ViewMatch.view_matches(self)
-                    elif entry == 5:
-                        return ViewTournament.\
-                            view_consultation_tournament_menu()
-                    else:
-                        print("Saisie incorrecte, veuillez recommencer :")
-                        return ViewTournament.\
-                            view_consultation_tournament(self)
+            elif self.tours[-1].matches and \
+                    self.tours[-1].matches[0].score_1 == 0 and \
+                    self.tours[-1].matches[0].score_2 == 0:
+                if entry == 1:
+                    return ViewPlayerByTournament.\
+                        view_players_by_alphabetical_order(self)
+                elif entry == 2:
+                    return ViewPlayerByTournament.view_players_by_ranking(
+                        self)
+                elif entry == 3:
+                    return ViewMatch.view_results_entry(self)
+                elif entry == 4:
+                    return ViewMatch.view_matches(self)
+                elif entry == 5:
+                    return ViewTournament.\
+                        view_consultation_tournament_menu()
+                else:
+                    print("Saisie incorrecte, veuillez recommencer :")
+                    return ViewTournament.\
+                        view_consultation_tournament(self)
             elif len(self.tours) < self.number_of_tours:
                 if entry == 1:
                     return ViewPlayerByTournament.\
