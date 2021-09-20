@@ -2,10 +2,10 @@
 	`git clone https://github.com/Bruno-M44/chess_club.git`
 
 ## Se positionner dans le répertoire
-	` cd chess_club/` 
+	`cd chess_club/` 
 
 ## Créer l'environnement virtuel :
-	`virtualenv -p python3 env`
+	`py -3 -m venv venv`
 
 ## Activer l'environnement virtuel :
 	`source env/bin/activate` (sous Windows : `C:\\{venv}\\Scripts\\activate.bat`)
