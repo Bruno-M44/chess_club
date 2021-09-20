@@ -116,26 +116,30 @@ class ViewPlayer:
 
     @classmethod
     def view_consultation_player_menu(cls):
-        for iPlayer in range(len(
-                TinyDB("tables.json").table("players").all())):
-            print(iPlayer + 1, "- ",
-                  TinyDB("tables.json").table("players").all()[iPlayer][
-                      "last_name"],
-                  TinyDB("tables.json").table("players").all()[iPlayer][
-                      "first_name"])
-        print("Sélectionner le joueur sur lequel vous voulez agir :")
-        while True:
-            try:
-                entry = int(input())
-                for iPlayer in range(
-                        len(TinyDB("tables.json").table("players").all())):
-                    if entry == iPlayer + 1:
-                        return ViewPlayerByPlayer.view_consultation_player(
-                            Player(TinyDB("tables.json").
-                                   table("players").all()[iPlayer]))
-                print("Saisie incorrecte, veuillez recommencer :")
-            except ValueError:
-                print("Saisie incorrecte, veuillez recommencer :")
+        if TinyDB("tables.json").table("players").all():
+            for iPlayer in range(len(
+                    TinyDB("tables.json").table("players").all())):
+                print(iPlayer + 1, "- ",
+                      TinyDB("tables.json").table("players").all()[iPlayer][
+                          "last_name"],
+                      TinyDB("tables.json").table("players").all()[iPlayer][
+                          "first_name"])
+            print("Sélectionner le joueur sur lequel vous voulez agir :")
+            while True:
+                try:
+                    entry = int(input())
+                    for iPlayer in range(
+                            len(TinyDB("tables.json").table("players").all())):
+                        if entry == iPlayer + 1:
+                            return ViewPlayerByPlayer.view_consultation_player(
+                                Player(TinyDB("tables.json").
+                                       table("players").all()[iPlayer]))
+                    print("Saisie incorrecte, veuillez recommencer :")
+                except ValueError:
+                    print("Saisie incorrecte, veuillez recommencer :")
+        else:
+            print("Créer d'abord un joueur.")
+            return ViewPlayer.view_player_menu()
 
     @classmethod
     def view_creation_player(cls):
