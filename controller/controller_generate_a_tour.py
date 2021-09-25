@@ -1,8 +1,10 @@
-from models.tournament import Tournament
 from models.match import Match
 
 
-class ControllerGenerateATour(Tournament):
+class ControllerGenerateATour:
+    def __init__(self, tournament):
+        self.tournament = tournament
+
     def player_score(self, player):
         score = 0
         for tour in self.tours:
@@ -36,7 +38,6 @@ class ControllerGenerateATour(Tournament):
         if not self.tours[0].matches:  # 1st tour generated
             players_sorted = sorted(self.players,
                                     key=lambda players: int(players.ranking))
-            print(self.tours[0].matches)
             for iPlayer in range(int(len(players_sorted) / 2)):
                 self.tours[0].matches.append(Match(
                     {"player_1": players_sorted[iPlayer].__dict__,

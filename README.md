@@ -8,7 +8,7 @@
 	`py -3 -m venv venv`
 
 ## Activer l'environnement virtuel :
-	`source env/bin/activate` (sous Windows : `C:\\{venv}\\Scripts\\activate.bat`)
+	`source env/bin/activate`(sous Windows :`C:\\{venv}\\Scripts\\activate.bat`)
 
 ## Installer les dépendances :	
 	`pip install -r requirements.txt`
@@ -16,9 +16,13 @@
 ## Lancer le programme : 
 	`python main.py`
 
-Un menu apparaît où vous pouvez naviguer pour consulter et gérer les tournois d'échecs que vous souhaitez.
+Un menu apparaît où vous pouvez naviguer pour consulter et gérer les tournois 
+d'échecs que vous souhaitez.  
+Veuillez d'abord créer les joueurs dont vous avez besoin pour
+le tournoi. Ils seront ainsi disponibles lorsque vous les ajouterez au tournoi.
 
 ## Lancer flake8 afin de vérifier que le code respecte les normes PEP8 : 
 	`flake8 controller main.py models view > flake8.html`
 
-Un fichier flake8.html est apparu à la racine du répertoire qui doit être vide prouvant qu'il n'y a pas d'erreur.
+Un fichier flake8.html est apparu à la racine du répertoire qui doit être vide 
+prouvant qu'il n'y a pas d'erreur.

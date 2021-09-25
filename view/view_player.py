@@ -1,13 +1,18 @@
-from models.tournament import Tournament
 from models.player import Player
 from controller.controller_creation import ControllerCreationPlayer
+from view.clear_terminal import ClearTerminal
 from tinydb import TinyDB
 
 
-class ViewPlayerByTournament(Tournament):
+class ViewPlayerByTournament:
+    def __init__(self, tournament):
+        self.tournament = tournament
+
     def view_players_by_alphabetical_order(self):
-        from view.view_tournament import ViewTournamentByTournament
-        print("Voici la liste des joueurs du tournoi classés par ordre "
+        from view.view_report import ViewReport
+        ClearTerminal.clear_terminal()
+        print("Voici la liste des joueurs du tournoi " + self.name +
+              " classés par ordre "
               "alphabétique (Nom, Prénom, date de naissance, sexe, "
               "classement) :")
         print()
@@ -20,13 +25,14 @@ class ViewPlayerByTournament(Tournament):
                   player.__dict__["birthday"],
                   player.__dict__["gender"], player.__dict__["ranking"],
                   sep=", ")
-        print("Appuyer sur entrée pour revenir au menu précédent")
         input()
-        return ViewTournamentByTournament.view_consultation_tournament(self)
+        return ViewReport.view_report_menu()
 
     def view_players_by_ranking(self):
-        from view.view_tournament import ViewTournamentByTournament
-        print("Voici la liste des joueurs du tournoi classés par classement "
+        from view.view_report import ViewReport
+        ClearTerminal.clear_terminal()
+        print("Voici la liste des joueurs du tournoi " + self.name +
+              " classés par classement "
               "(Nom, Prénom, date de naissance, sexe, classement) :")
         print()
         ranking_players = sorted(self.players,
@@ -36,15 +42,59 @@ class ViewPlayerByTournament(Tournament):
                   player.__dict__["birthday"],
                   player.__dict__["gender"], player.__dict__["ranking"],
                   sep=", ")
-        print("Appuyer sur entrée pour revenir au menu précédent")
         input()
-        return ViewTournamentByTournament.view_consultation_tournament(self)
+        return ViewReport.view_report_menu()
 
     def view_add_players(self):
-        from view.view_tournament import ViewTournamentByTournament, \
-            ViewTournament
+        from view.view_tournament import ViewTournament
+        ClearTerminal.clear_terminal()
         print("Voici la liste des joueurs disponibles :")
-        print_number = 0
+        list_players_available = ViewPlayerByTournament.players_available(self)
+        for iPlayer in range(len(list_players_available)):
+            print(iPlayer + 1, "- ",
+                  list_players_available[iPlayer]["last_name"],
+                  list_players_available[iPlayer]["first_name"])
+
+        print("Sélectionner le joueur que vous voulez ajouter :")
+        try:
+            entry = int(input())
+            while True:
+                for iPlayer in range(len(list_players_available)):
+                    if entry == iPlayer + 1:
+                        if not ViewPlayerByTournament.players_available(self):
+                            ClearTerminal.clear_terminal()
+                            print("Il n'y a plus de joueur disponible. "
+                                  "Veuillez en créer un autre via le "
+                                  "menu joueur")
+                            return ViewTournament.view_tournament_menu()
+                        else:
+                            self.players.\
+                                append(Player(list_players_available[iPlayer]))
+                            self.save_table()
+                            ClearTerminal.clear_terminal()
+                            print("Joueur ajouté au tournoi")
+                            input()
+                            ClearTerminal.clear_terminal()
+                            if ViewPlayerByTournament.players_available(
+                                    self):
+                                print("Voulez-vous ajouter un autre joueur ? "
+                                      "(O ou autre touche)")
+                                entry = input()
+                                if entry == "O":
+                                    return ViewPlayerByTournament. \
+                                        view_add_players(self)
+                                else:
+                                    return ViewTournament.\
+                                        view_tournament_menu()
+                            else:
+                                return ViewTournament.view_tournament_menu()
+        except ValueError:
+            print("Saisie incorrecte, veuillez recommencer "
+                  "(appuyer sur entrée :)")
+            input()
+            return ViewPlayerByTournament.view_add_players(self)
+
+    def players_available(self):
         players_available = []
         for player in TinyDB("tables.json").table("players").all():
             available = True
@@ -55,41 +105,14 @@ class ViewPlayerByTournament(Tournament):
                         == player["first_name"]):
                     available = False
             if available:
-                players_available.append(Player(player))
-                print_number += 1
-                print(print_number, "- ", player["last_name"],
-                      player["first_name"])
-        if not players_available:
-            print("Vous ne pouvez pas ajouter de joueur à ce tournoi. "
-                  "Veuillez créer un autre joueur.")
-            return ViewTournament.view_consultation_tournament_menu()
-
-        print("Sélectionner le joueur que vous voulez ajouter :")
-        try:
-            entry = int(input())
-            while True:
-                for iPlayer in range(len(players_available)):
-                    if entry == iPlayer + 1:
-                        self.players.append(players_available[iPlayer])
-                        self.save_table()
-                        print("Joueur ajouté au tournoi")
-                        print("Voulez-vous ajouter un autre joueur ? O ou "
-                              "autre touche)")
-                        entry = input()
-                        if entry == "O":
-                            return ViewPlayerByTournament. \
-                                view_add_players(self)
-                        else:
-                            return ViewTournamentByTournament. \
-                                view_consultation_tournament(self)
-                print("Saisie incorrecte, veuillez recommencer :")
-        except ValueError:
-            print("Saisie incorrecte, veuillez recommencer :")
+                players_available.append(player)
+        return players_available
 
 
 class ViewPlayer:
     @classmethod
     def view_player_menu(cls):
+        ClearTerminal.clear_terminal()
         i_correct_input = False
         while not i_correct_input:
             print("1- Consultation joueurs")
@@ -115,6 +138,7 @@ class ViewPlayer:
 
     @classmethod
     def view_consultation_player_menu(cls):
+        ClearTerminal.clear_terminal()
         if TinyDB("tables.json").table("players").all():
             for iPlayer in range(len(
                     TinyDB("tables.json").table("players").all())):
@@ -142,34 +166,90 @@ class ViewPlayer:
 
     @classmethod
     def view_creation_player(cls):
-        i_player_created = False
+        ClearTerminal.clear_terminal()
         player_created = {}
-        while ControllerCreationPlayer.controller_creation_player(
-                player_created) != "OK" and not i_player_created:
+        print("Saisir le nom du joueur :")
+        save_input = {"last_name": input()}
+        print("Saisir le prénom du joueur :")
+        save_input["first_name"] = input()
+        while not ControllerCreationPlayer.controller_name(save_input):
             print("Saisir le nom du joueur :")
-            player_created["last_name"] = input()
+            save_input = {"last_name": input()}
             print("Saisir le prénom du joueur :")
-            player_created["first_name"] = input()
-            print("Saisir la date de naissance (format JJ/MM/SSAA) :")
-            player_created["birthday"] = input()
-            print("Saisir le sexe (M ou F) :")
-            player_created["gender"] = input()
-            print("Saisir le classement :")
-            player_created["ranking"] = input()
-            if ControllerCreationPlayer.controller_creation_player(
-                    player_created) == "OK":
-                Player(player_created).save_table()
-                print("Joueur créé")
-                i_player_created = True
-                ViewPlayer.view_player_menu()
-            else:
-                for i in ControllerCreationPlayer.controller_creation_player(
-                        player_created):
-                    print(i)
+            save_input["first_name"] = input()
+        player_created["last_name"] = save_input["last_name"]
+        player_created["first_name"] = save_input["first_name"]
+
+        ClearTerminal.clear_terminal()
+        print("Saisir la date de naissance (format JJ/MM/SSAA) :")
+        save_input = input()
+        while not ControllerCreationPlayer.controller_birthday(save_input):
+            save_input = input()
+        player_created["birthday"] = save_input
+
+        ClearTerminal.clear_terminal()
+        print("Saisir le sexe (M ou F) :")
+        save_input = input()
+        while not ControllerCreationPlayer.controller_gender(save_input):
+            save_input = input()
+        player_created["gender"] = save_input
+
+        ClearTerminal.clear_terminal()
+        print("Saisir le classement :")
+        save_input = input()
+        while not ControllerCreationPlayer.controller_ranking(save_input):
+            save_input = input()
+        player_created["ranking"] = save_input
+
+        ClearTerminal.clear_terminal()
+        Player(player_created).save_table()
+        print("Joueur créé")
+        input()
+        return ViewPlayer.view_player_menu()
+
+    @classmethod
+    def view_players_by_alphabetical_order(cls):
+        from view.view_report import ViewReport
+        ClearTerminal.clear_terminal()
+        print("Voici la liste des joueurs par ordre alphabétique (Nom, "
+              "Prénom, date de naissance, sexe et classement) :")
+        print()
+        alphabetical_order_players = sorted(TinyDB("tables.json").
+                                            table("players").all(),
+                                            key=lambda x: (
+                                                x["last_name"],
+                                                x["first_name"]))
+        for player in alphabetical_order_players:
+            print(player["last_name"], player["first_name"],
+                  player["birthday"], player["gender"],
+                  player["ranking"], sep=", ")
+        input()
+        return ViewReport.view_report_menu()
+
+    @classmethod
+    def view_players_by_ranking(cls):
+        from view.view_report import ViewReport
+        ClearTerminal.clear_terminal()
+        print("Voici la liste des joueurs par classement (Nom, "
+              "Prénom, date de naissance, sexe et classement) :")
+        print()
+        ranking_players = sorted(TinyDB("tables.json").
+                                 table("players").all(),
+                                 key=lambda x: (x["ranking"]))
+        for player in ranking_players:
+            print(player["last_name"], player["first_name"],
+                  player["birthday"], player["gender"],
+                  player["ranking"], sep=", ")
+        input()
+        return ViewReport.view_report_menu()
 
 
-class ViewPlayerByPlayer(Player):
+class ViewPlayerByPlayer:
+    def __init__(self, player):
+        self.player = player
+
     def view_consultation_player(self):
+        ClearTerminal.clear_terminal()
         print("Détails du joueur sélectionné :")
         print()
         print("Nom : ", self.last_name)
