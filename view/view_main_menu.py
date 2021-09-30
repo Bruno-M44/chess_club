@@ -28,4 +28,3 @@ class ViewMain:
                     print("Saisie incorrecte, veuillez recommencer :")
             except ValueError:
                 print("Saisie incorrecte, veuillez recommencer :")
-

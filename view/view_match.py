@@ -1,7 +1,7 @@
 from models.tournament import Tournament, Tour
-from controller.controller_creation import ControllerCreationTour
 from controller.controller_generate_a_tour import ControllerGenerateATour
 from view.clear_terminal import ClearTerminal
+from datetime import datetime
 
 
 class ViewTour:
@@ -11,37 +11,21 @@ class ViewTour:
     def view_generate_a_tour(self):
         from view.view_tournament import ViewTournament
         ClearTerminal.clear_terminal()
-        tour_created = {}
-        print("Saisir le nom du tour :")
-        save_input = input()
-        while not ControllerCreationTour.controller_name(save_input):
-            save_input = input()
-        tour_created["name"] = save_input
-
-        ClearTerminal.clear_terminal()
-        print("Saisir la date de début du tour (format JJ/MM/SSAA) :")
-        save_input = input()
-        while not ControllerCreationTour.controller_start_date(save_input):
-            save_input = input()
-        tour_created["start_date"] = save_input
-
-        ClearTerminal.clear_terminal()
-        print("Saisir la date de fin du tour (format JJ/MM/SSAA) - si non "
-              "renseigné, le tour sera par défaut sur 1 journée :")
-        save_input = input()
-        while not ControllerCreationTour.controller_end_date(save_input):
-            save_input = input()
-        tour_created["end_date"] = save_input
-
-        tour_created["matches"] = []
-
+        tour_created = {"name": str("Round " +
+                                    str(len(self.tours) + 1)),
+                        "start_date": datetime.today().strftime('%d/%m/%Y'),
+                        "end_date": "",
+                        "matches": []}
         self.tours.append(Tour(tour_created))
         ControllerGenerateATour.generate_a_tour(self)
         Tournament.save_table(self)
         ClearTerminal.clear_terminal()
-        print("Le tour a été généré")
-        input()
-        return ViewTournament.view_tournament_menu()
+        print("Entrer les résultats du ", tour_created["name"], " :")
+        print("Appuyer sur 'r' pour sortir")
+        if input() == "r":
+            return ViewTournament.view_tournament_menu()
+        else:
+            return ViewTour.view_results_entry(self)
 
     def view_results_entry(self):
         from view.view_tournament import ViewTournament
@@ -64,16 +48,25 @@ class ViewTour:
             else:
                 match.score_1 = match.score_2 = 0.5
             ClearTerminal.clear_terminal()
+        self.tours[-1].end_date = datetime.today().strftime('%d/%m/%Y')
         self.save_table()
         print("Les résultats ont été sauvegardés")
-        input()
-        return ViewTournament.view_tournament_menu()
+        if len(self.tours) < self.number_of_tours:
+            print("Le tour suivant va être généré. Appuyer sur 'r' si vous "
+                  "voulez revenir au menu du tournoi")
+            if input() == "r":
+                return ViewTournament.view_tournament_menu()
+            else:
+                return ViewTour.view_generate_a_tour(self)
+        else:
+            print("Le tournoi a entièrement été généré, il n'est plus "
+                  "modifiable.")
+            return ViewTournament.view_tournament_menu()
 
     def view_tours(self):
         from view.view_report import ViewReport
         ClearTerminal.clear_terminal()
-        print("Voici les différents tours du tournoi (nom, date de début, "
-              "date de fin) :")
+        print("Voici les différents tours du tournoi :")
         for tour in self.tours:
             print(tour.name, tour.start_date, tour.end_date, sep=" ; ")
         input()

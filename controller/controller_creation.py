@@ -66,36 +66,6 @@ class ControllerCreationTournament:
             return True
 
 
-class ControllerCreationTour:
-    def controller_name(self):
-        if len(self) < 3:
-            print("Le nom du tour doit être renseigné.")
-            return False
-        else:
-            return True
-
-    def controller_start_date(self):
-        try:
-            datetime.strptime(self, "%d/%m/%Y")
-            return True
-        except ValueError:
-            print("La date de début du tour doit être une date valide au "
-                  "format JJ/MM/SSAA.")
-            return False
-
-    def controller_end_date(self):
-        try:
-            datetime.strptime(self, "%d/%m/%Y")
-            return True
-        except ValueError:
-            if self == "":
-                return True
-            else:
-                print("La date de fin du tour doit être une date valide au "
-                      "format JJ/MM/SSAA.")
-                return False
-
-
 class ControllerCreationPlayer:
     def controller_name(self):
         if len(self["last_name"]) < 2:

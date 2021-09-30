@@ -45,6 +45,35 @@ class ViewPlayerByTournament:
         input()
         return ViewReport.view_report_menu()
 
+    def view_players_by_score(self):
+        from view.view_report import ViewReport
+        ClearTerminal.clear_terminal()
+        print("Voici la liste des joueurs du tournoi " + self.name +
+              " classés par score "
+              "(Nom, Prénom, date de naissance, sexe, classement, score) :")
+        print(ViewPlayerByTournament.score_player(self, self.players[0]))
+        scores_players = sorted(self.players,
+                                key=lambda players: -ViewPlayerByTournament.
+                                score_player(self, players))
+        for player in scores_players:
+            print(player.__dict__["last_name"], player.__dict__["first_name"],
+                  player.__dict__["birthday"],
+                  player.__dict__["gender"], player.__dict__["ranking"],
+                  ViewPlayerByTournament.score_player(self, player),
+                  sep=", ")
+        input()
+        return ViewReport.view_report_menu()
+
+    def score_player(self, player):
+        score = 0
+        for tour in self.tours:
+            for match in tour.matches:
+                if match.player_1.__dict__ == player.__dict__:
+                    score += match.score_1
+                elif match.player_2.__dict__ == player.__dict__:
+                    score += match.score_2
+        return score
+
     def view_add_players(self):
         from view.view_tournament import ViewTournament
         ClearTerminal.clear_terminal()
@@ -56,43 +85,58 @@ class ViewPlayerByTournament:
                   list_players_available[iPlayer]["first_name"])
 
         print("Sélectionner le joueur que vous voulez ajouter :")
-        try:
-            entry = int(input())
-            while True:
-                for iPlayer in range(len(list_players_available)):
-                    if entry == iPlayer + 1:
-                        if not ViewPlayerByTournament.players_available(self):
-                            ClearTerminal.clear_terminal()
-                            print("Il n'y a plus de joueur disponible. "
-                                  "Veuillez en créer un autre via le "
-                                  "menu joueur")
-                            return ViewTournament.view_tournament_menu()
-                        else:
-                            self.players.\
-                                append(Player(list_players_available[iPlayer]))
-                            self.save_table()
-                            ClearTerminal.clear_terminal()
-                            print("Joueur ajouté au tournoi")
-                            input()
-                            ClearTerminal.clear_terminal()
-                            if ViewPlayerByTournament.players_available(
+        while True:
+            try:
+                entry = int(input())
+                if 0 < entry <= len(list_players_available):
+                    for iPlayer in range(len(list_players_available)):
+                        if entry == iPlayer + 1:
+                            if not ViewPlayerByTournament.players_available(
                                     self):
-                                print("Voulez-vous ajouter un autre joueur ? "
-                                      "(O ou autre touche)")
-                                entry = input()
-                                if entry == "O":
-                                    return ViewPlayerByTournament. \
-                                        view_add_players(self)
+                                ClearTerminal.clear_terminal()
+                                print("Il n'y a plus de joueur disponible. "
+                                      "Veuillez en créer un autre via le "
+                                      "menu joueur")
+                                return ViewTournament.view_tournament_menu()
+                            else:
+                                self.players.\
+                                    append(Player(list_players_available[
+                                                                    iPlayer]))
+                                self.save_table()
+                                ClearTerminal.clear_terminal()
+                                print("Joueur ajouté au tournoi")
+                                input()
+                                ClearTerminal.clear_terminal()
+                                if ViewPlayerByTournament.players_available(
+                                        self):
+                                    print(len(self.players),
+                                          " joueurs ajoutés")
+
+                                    if len(self.players) == 8 and \
+                                            self.number_of_tours == 4:
+                                        "Tous les joueurs ont été ajoutés."
+                                        input()
+                                        return ViewTournament.\
+                                            view_tournament_menu()
+
+                                    print("pour un tournoi par défaut, "
+                                          "veuillez renseigner 8 joueurs.")
+                                    print("Ajouter un autre joueur : "
+                                          "'r' pour retourner en arrière")
+                                    entry = input()
+                                    if entry == "r":
+                                        return ViewTournament.\
+                                            view_tournament_menu()
+                                    else:
+                                        return ViewPlayerByTournament. \
+                                            view_add_players(self)
                                 else:
                                     return ViewTournament.\
                                         view_tournament_menu()
-                            else:
-                                return ViewTournament.view_tournament_menu()
-        except ValueError:
-            print("Saisie incorrecte, veuillez recommencer "
-                  "(appuyer sur entrée :)")
-            input()
-            return ViewPlayerByTournament.view_add_players(self)
+                else:
+                    print("Saisie incorrecte, veuillez recommencer")
+            except ValueError:
+                print("Saisie incorrecte, veuillez recommencer")
 
     def players_available(self):
         players_available = []
@@ -115,7 +159,7 @@ class ViewPlayer:
         ClearTerminal.clear_terminal()
         i_correct_input = False
         while not i_correct_input:
-            print("1- Consultation joueurs")
+            print("1- Consultation joueurs et modification classement")
             print("2- Création nouveau joueur")
             print("3- Retour au menu précédent")
             print("Saisir 1, 2 ou 3 puis entrée pour faire votre choix :")
@@ -235,7 +279,7 @@ class ViewPlayer:
         print()
         ranking_players = sorted(TinyDB("tables.json").
                                  table("players").all(),
-                                 key=lambda x: (x["ranking"]))
+                                 key=lambda x: (int(x["ranking"])))
         for player in ranking_players:
             print(player["last_name"], player["first_name"],
                   player["birthday"], player["gender"],
@@ -259,12 +303,30 @@ class ViewPlayerByPlayer:
         print("Classement : ", self.ranking)
         print()
         print("Sélectionner l'action désirée :")
-        print("1- Retour au menu précédent")
+        print("1- Modification classement joueur")
+        print("2- Retour au menu précédent")
         while True:
             try:
                 entry = int(input())
                 if entry == 1:
+                    return ViewPlayerByPlayer.view_modification_ranking(self)
+                elif entry == 2:
                     return ViewPlayer.view_player_menu()
+                else:
+                    print("Saisie incorrecte, veuillez recommencer :")
+            except ValueError:
+                print("Saisie incorrecte, veuillez recommencer :")
+
+    def view_modification_ranking(self):
+        ClearTerminal.clear_terminal()
+        print("Entrer le nouveau classement du joueur :")
+        while True:
+            try:
+                entry = int(input())
+                if entry > 0:
+                    self.modification_ranking(entry)
+                    self.save_table()
+                    return ViewPlayerByPlayer.view_consultation_player(self)
                 else:
                     print("Saisie incorrecte, veuillez recommencer :")
             except ValueError:

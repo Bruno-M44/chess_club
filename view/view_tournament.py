@@ -101,8 +101,8 @@ class ViewTournament:
     @classmethod
     def view_consultation_tournament_menu(cls):
         ClearTerminal.clear_terminal()
-        for iTournament in range(len(TinyDB("tables.json").
-                                             table("tournaments").all())):
+        for iTournament in range(len(TinyDB("tables.json").table(
+                "tournaments").all())):
             print(iTournament + 1, "- ",
                   TinyDB("tables.json").table("tournaments").all()[
                       iTournament]["name"])
@@ -149,11 +149,14 @@ class ViewTournamentByTournament:
     def view_modification_tournament(self):
         ClearTerminal.clear_terminal()
         print("Sélectionner l'action désirée :")
-        if len(self.players) < 4 and \
+        if len(self.players) < 4 or (len(self.players) < 8 and
+                                     self.number_of_tours == 4) and \
                 ViewPlayerByTournament.players_available(self):
             print("1- Ajout joueurs")
             print("2- Retour au menu précédent")
-        elif not self.tours and ViewPlayerByTournament.players_available(self):
+        elif not self.tours and ViewPlayerByTournament. \
+                players_available(self) and (len(self.players) != 8 or
+                                             self.number_of_tours != 4):
             print("1- Ajout joueurs")
             print("2- Générer un tour")
             print("3- Retour au menu précédent")
@@ -184,8 +187,10 @@ class ViewTournamentByTournament:
                     else:
                         print("Saisie incorrecte, veuillez recommencer :")
                         return ViewTournament.view_tournament_menu()
-                elif not self.tours and \
-                        ViewPlayerByTournament.players_available(self):
+                elif not self.tours and ViewPlayerByTournament. \
+                        players_available(self) and (len(self.players) != 8
+                                                     or self.number_of_tours
+                                                     != 4):
                     if entry == 1:
                         return ViewPlayerByTournament.view_add_players(self)
                     elif entry == 2:

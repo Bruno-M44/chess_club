@@ -15,10 +15,11 @@ class ViewReport:
             print("3- Liste de tous les joueurs d'un tournoi par ordre "
                   "alphabétique")
             print("4- Liste de tous les joueurs d'un tournoi par classement")
-            print("5- Liste de tous les tournois")
-            print("6- Liste de tous les tours d'un tournoi")
-            print("7- Liste de tous les matchs d'un tournoi")
-            print("8- Retour au menu précédent")
+            print("5- Liste de tous les joueurs d'un tournoi par score")
+            print("6- Liste de tous les tournois")
+            print("7- Liste de tous les tours d'un tournoi")
+            print("8- Liste de tous les matchs d'un tournoi")
+            print("9- Retour au menu précédent")
             try:
                 entry = int(input())
                 if entry == 1:
@@ -34,16 +35,20 @@ class ViewReport:
                         view_players_by_ranking(
                             ViewTournament.view_consultation_tournament_menu())
                 elif entry == 5:
+                    return ViewPlayerByTournament.\
+                        view_players_by_score(
+                            ViewTournament.view_consultation_tournament_menu())
+                elif entry == 6:
                     return ViewTournamentByTournament.\
                         view_consultation_tournament(
                             ViewTournament.view_consultation_tournament_menu())
-                elif entry == 6:
+                elif entry == 7:
                     return ViewTour.view_tours(
                         ViewTournament.view_consultation_tournament_menu())
-                elif entry == 7:
+                elif entry == 8:
                     return ViewMatch.view_matches(ViewTour.view_tour_menu(
                         ViewTournament.view_consultation_tournament_menu()))
-                elif entry == 8:
+                elif entry == 9:
                     return ViewMain.view_main_menu()
                 else:
                     print("Saisie incorrecte, veuillez recommencer :")

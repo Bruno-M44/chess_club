@@ -19,6 +19,9 @@ class Player:
         }
         return serialized_player
 
+    def modification_ranking(self, ranking):
+        self.ranking = ranking
+
     def save_table(self):
         serialized_player = self.serialization()
         TinyDB("tables.json").table("players").\
